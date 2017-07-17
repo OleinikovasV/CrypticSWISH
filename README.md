@@ -1,5 +1,6 @@
 # SWISH
 Scripts that are helpful to setup SWISH [1] simulations.
+Documentation to be added soon!
 
 Scripts have been rewritten to rely on ParmEd (https://www.parmed.com) for better transferabilty and extensibility. Have been tested heavily using AMBER and GROMACS, a little bit of OpenMM, too.
  
