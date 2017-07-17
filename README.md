@@ -8,6 +8,7 @@ Scripts have been rewritten to rely on ParmEd (https://www.parmed.com) for bette
 3. Other useful scripts for analysis (TBA)
 
 References:
+
 [1]. pubs.acs.org/doi/abs/10.1021/jacs.6b05425
 
-Consider all scripts under development. Please, inform of any issues.
+N.B. Consider all scripts under development. Please, inform of any issues. Thank you!
