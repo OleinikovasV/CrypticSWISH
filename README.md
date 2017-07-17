@@ -2,7 +2,7 @@
 Scripts that are helpful to setup SWISH [1] simulations.
 Documentation to be added soon!
 
-Scripts have been rewritten to rely on ParmEd (https://www.parmed.com) for better transferabilty and extensibility. Have been tested heavily using AMBER and GROMACS, a little bit of OpenMM, too.
+Scripts have been rewritten to rely on ParmEd (https://github.com/ParmEd/ParmEd) for better transferabilty and extensibility. Have been tested heavily using AMBER and GROMACS, a little bit of OpenMM, too.
  
 1. Prepare topologies for water-apolar interface scaling
 2. Add fragments and adjust interligand repulsion (optional)
