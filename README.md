@@ -10,6 +10,6 @@ Scripts have been rewritten to rely on ParmEd (https://github.com/ParmEd/ParmEd)
 
 References:
 
-[1]. pubs.acs.org/doi/abs/10.1021/jacs.6b05425
+[1]. https://pubs.acs.org/doi/abs/10.1021/jacs.6b05425
 
 N.B. Consider all scripts under development. Please, inform of any issues. Thank you!
