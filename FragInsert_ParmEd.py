@@ -11,7 +11,7 @@ are in lower cases (GAFF format).
 ------------------------
 Example:
 ./ParmEd_insert_fragments.py -f <prmtop_file> -xyz <system_coords>
-			     -frag BEN -conc 0.5 -lig_repel
+			     -frag BEN -conc 0.5 -lig_repel -gmx
 
 The script relies on ParmEd and Numpy tools.
 
