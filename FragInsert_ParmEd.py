@@ -188,21 +188,22 @@ def stripWaterClash(input_parm, Water, InsertedFrags, closeness=0.75):
     return
 
 #----------------------------------------------
-def get_apolar_atomtypes(input_parm):
+def get_ligand_atomtypes(input_parm, hydrogens=False):
     """
-    Read all residues and atoms and return a list of sidechain (+ C_alpha)
-    C and S atomtypes to be used in SWISH scaling.
+    Read all atoms and returns a dictionary of ligand atoms.
     """
-    # apolar atomtypes
-    apolar_atomtypes = []
-    for resid in input_parm.residues:
-        for atom in resid.atoms:
-            if atom.atomic_number in [6, 16]: # C and S
-                # exclude backbone carbonyl carbon - named 'C'!
-                # avoid non-protein atoms; ligands are lower-cases in GAFF
-                if atom.name != 'C' and atom.type.isupper() and atom.type not in apolar_atomtypes:
-                    apolar_atomtypes.append(atom.type)
-    return apolar_atomtypes
+    # select ligand atoms that will want to repel
+    lig_atomtypes = []
+
+    for atom in input_parm.atoms:
+        if atom.type not in lig_atomtypes:
+            # non-protein atoms; ligands are lower-cases in GAFF
+            if atom.type.islower():
+                if hydrogens: # add without checking
+                    lig_atomtypes.append(atom.type)
+                elif atom.atomic_number > 1: # exclude hydrogens and dummies
+                    lig_atomtypes.append(atom.type)
+    return lig_atomtypes
 
 #--------------------------------------------------------------------------
 def add_interligand_repulsion(input_parm, lig_atomtypes, verbose=False):
@@ -240,6 +241,8 @@ def add_interligand_repulsion(input_parm, lig_atomtypes, verbose=False):
             gromacs_nonbond += "%-10s   %-10s  1   %8.6e   %8.6e\n" % (type_i, type_j, sigma, epsilon)
 
     # add COMMENTS
+    # add USER_COMMENTS flag to .prmtop file!
+    input_parm.add_flag("USER_COMMENTS", "(20a4)", data=None, num_items=0)
     input_parm.parm_comments['USER_COMMENTS'] += ['Interligand repulsion set to (Rmin, eps) = (%.3e, %.3e)' % (Rmin_ij, eps_ij)]
 
 
@@ -286,13 +289,13 @@ def add_nonbond_params(gmxtopin, gmx_nonbond, gmxtopout):
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=d, epilog=" ")
 
 parser.add_argument("-f", type=str, default='system.wat.leap.prmtop', help='input AMBER topology file name (default: %(default)s)')
+parser.add_argument("-xyz", type=str, default='system.wat.leap.rst7', help='input AMBER coordinate file name (default: %(default)s)')
 parser.add_argument("-o", type=str, default=None, help='output AMBER topology file name (default: system+FRG+RepFrag.prmtop)')
 parser.add_argument("-frag", type=str, default='BEN', help='input fragment name (default: %(default)s)')
-parser.add_argument("-fraglibdir", type=str, default='./', help='path to directory of fragment library (.prmtop, .rst7) (default: %(default)s)')
+parser.add_argument("-fraglibdir", type=str, default='./fraglib', help='path to directory of fragment library (.prmtop, .rst7) (default: %(default)s)')
 parser.add_argument("-conc", type=float, default='0.25', help='approx. molar concentration of the fragment (default: %(default)s)')
-parser.add_argument("-frag_repel", default=False, action='store_true', help="use inter ligand repulsion; (default: %(default)s)")
+parser.add_argument("-frag_repel", default=True, action='store_true', help="use inter ligand repulsion; (default: %(default)s)")
 parser.add_argument("-v", "--verbose", action='store_true', help="be verbose")
-parser.add_argument("-xyz", type=str, default='system.wat.leap.rst7', help='input AMBER coordinate file name (default: %(default)s)')
 parser.add_argument("-gmx", default=False, action='store_true', help="save GROMACS topology, too (default: %(default)s)")
 
 
@@ -303,18 +306,10 @@ outputname = args.o
 fraglibdir = args.fraglibdir
 frag = args.frag
 conc = args.conc
-nreps = args.nreps
-smax = args.smax
-smin = args.smin
-scale = [ sf for sf in args.scale ]
-HMR = args.hmr
-HM_Da = args.hm_Da
 frag_repel = args.frag_repel
 verbose = args.verbose
-ignore = args.ignore
 inputcoords = args.xyz
 gmx = args.gmx
-bind_pref = args.bind_pref
 
 
 print("Starting script!\n")
@@ -325,13 +320,13 @@ start = time.time()
 dirpath = "./"
 
 fraginputfile = frag + ".prmtop"
-fraginputcoord = frag + ".rst7"
+fraginputcoords = frag + ".rst7"
 
 # load protein system solvated and neutralized with ions!
 parm = parmed.load_file(inputfile, xyz=inputcoords)
 
 # load fragment to insert (1 residue!)
-fragment = parmed.load_file(fraglibdir+fraginputfile, xyz=fraglibdir+fraginputcoords)
+fragment = parmed.load_file("%s/%s" % (fraglibdir, fraginputfile), xyz="%s/%s" % (fraglibdir, fraginputcoords))
 fragResName = fragment.residues[0].name
 print("Fragment %s is named %s in the topology!" % (frag, fragResName))
 
@@ -344,7 +339,6 @@ N_frags = round(6.022e23 * volume * 1.0e-27 * conc) # rounded
 filename = dirpath + ".".join(inputfile.split(".")[:-1])
 outputname = filename + "_%.2fM-%s" % (conc, frag)
 # also save GROMACS parameter files (*.top, *.gro)!
-gmx = True
 
 
 # allowed closeness (in A) between inserted fragment center and:
@@ -381,14 +375,6 @@ if gmx:
 #### 3. once all the waters inserted - remove any waters overlapping with fragments
 stripWaterClash(parm, Water, InsertedFrags, closeness=0.75)
 
-#### 4. optionally add inter-fragment repulsion
-if frag_repel:
-    # get atomtypes for non-H ligands atoms
-    lig_atomtypes = get_ligand_atomtypes(fragment, hydrogens=False)
-    # remove posivitive LJ attraction term for all above seletcted
-    parm, lig_gmx_nonbond = add_interligand_repulsion(parm, lig_atomtypes, verbose=True)
-    outputname += "+RepFrag"
-
 
 #### 4. save new topology and coordinates!
 parm.save(outputname+".prmtop", overwrite=1)
@@ -415,4 +401,4 @@ if frag_repel:
         parm.save(outputname+".top", overwrite=1)
         parm.save(outputname+".gro", overwrite=1)
         # save
-        add_nonbond_params(gmxtopin+".top", gmx_nonbond, outputname+".top")
+        add_nonbond_params(gmxtopin+".top", lig_gmx_nonbond, outputname+".top")
