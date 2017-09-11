@@ -352,6 +352,7 @@ def scale_LJPairs(input_parm, atomtypes_changed, sfactor, verbose=False):
 #----------------------------------------------
 def get_NONBONDED_PARM_INDEX(input_parm, atype_i, atype_j):
     """
+    DEPRECIATED.
     Get NONBONDED_PARM_INDEX for atomtype_i and atomtype_j LJ interaction.
     Returns and index using Amber prmtop file convention (start index = 1).
     If parm_data is modified as Python list - the index needs to be reduced by 1.
@@ -373,6 +374,7 @@ def get_NONBONDED_PARM_INDEX(input_parm, atype_i, atype_j):
 #----------------------------------------------
 def remove_BCOEF(input_parm, atomtypes):
     """
+    DEPRECIATED.
     Remove BCOEF (C6) for the attractive part of LJ.
     Usage eg. to prevent ligand aggregation.
     ----
