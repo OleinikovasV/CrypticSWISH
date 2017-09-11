@@ -299,12 +299,20 @@ def combineLJPair(rh_i, eps_i, rh_j, eps_j):
 #----------------------------------------------
 def scale_LJPairs(input_parm, atomtypes_changed, sfactor, verbose=False):
     """
-    Multiplies water (atomtype = "OW") LJPair depth (epsilon) with
+    Multiplies water oxygen (atomtype starting "OW") LJPair depth (epsilon) with
     selected atomtypes by sfactor according to SWISH scheme.
     Returns an updated parmed parameter object.
     """
-    rh_OW = input_parm.LJ_radius[input_parm.LJ_types["OW"]-1] # Rmin/2
-    eps_OW = input_parm.LJ_depth[input_parm.LJ_types["OW"]-1]
+    # assume water oxygen starts with OW
+    water_type = [key for key in input_parm.LJ_types if key.startswith("OW")]
+    if len(water_type) != 1:
+        print("ERROR: failed to recognize water oxygen type!\n", water_type)
+        exit(6)
+    else:
+        OW_type = water_type[0]
+
+    rh_OW = input_parm.LJ_radius[input_parm.LJ_types[OW_type]-1] # Rmin/2
+    eps_OW = input_parm.LJ_depth[input_parm.LJ_types[OW_type]-1]
 
     # add COMMENTS
     input_parm.parm_comments['USER_COMMENTS'] += ['SWISH METHOD (scaling factor = %.3f)' % sfactor,\
@@ -323,7 +331,8 @@ def scale_LJPairs(input_parm, atomtypes_changed, sfactor, verbose=False):
         # use atype.replace("*", "\*") in selection to avoid wild-card results!
         # strangely "\*" works instead of "'*'" here, unlike in the ParmEd manual
         # on selection masks - http://parmed.github.io/ParmEd/html/parmed.html#atom-selection-masks
-        act_changeLJPair = parmed.tools.actions.changeLJPair(input_parm, "@%" + atype.replace("*", "\\\*"), "@%OW", Rmin_iOW, eps_iOW)
+        print atype, OW_type
+	act_changeLJPair = parmed.tools.actions.changeLJPair(input_parm, "@%" + atype.replace("*", "\\\*"), "@%"+OW_type.replace("_","\\\_"), Rmin_iOW, eps_iOW)
         # write action to log
         if list(act_changeLJPair.mask1.Selected()) == []:
             print("WARNING: empty selection %s !\n" % act_changeLJPair.mask1.mask)
@@ -334,7 +343,7 @@ def scale_LJPairs(input_parm, atomtypes_changed, sfactor, verbose=False):
         # add equivalent line in GROMACS topology
         sigma = Rmin_iOW * 2**(1.0/6) / 10 # convert to A
         epsilon = eps_iOW * 4.184     #convert to kJ/mol
-        gromacs_nonbond += "%-10s   %-10s  1   %8.6e   %8.6e\n" % ("OW", atype, sigma, epsilon)
+        gromacs_nonbond += "%-10s   %-10s  1   %8.6e   %8.6e\n" % (OW_type, atype, sigma, epsilon)
 
     return input_parm, gromacs_nonbond
 
