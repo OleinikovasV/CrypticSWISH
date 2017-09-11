@@ -15,7 +15,7 @@ The script relies on ParmEd and Numpy tools.
 Vladas Oleinikovas
 uccavol@ucl.ac.uk
 
-version beta.2                                                    11/05/2017
+version beta.3                                                    11/09/2017
 ================================================================================
 """
 
@@ -285,7 +285,9 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 
 parser.add_argument("-f", type=str, default='system.wat.leap.prmtop', help='input AMBER topology file name (default: %(default)s)')
 parser.add_argument("-o", type=str, default=None, help='output AMBER topology file name (default: system+FRG+RepFrag.prmtop)')
-
+parser.add_argument("-frag", type=str, default='BEN', help='input fragment name (default: %(default)s)')
+parser.add_argument("-fraglibdir", type=str, default='./', help='path to directory of fragment library (.prmtop/.rst7) (default: %(default)s)')
+parser.add_argument("-conc", type=float, default='0.25', help='approx. molar concentration of the fragment (default: %(default)s)')
 parser.add_argument("-frag_repel", default=False, action='store_true', help="use inter ligand repulsion; (default: %(default)s)")
 parser.add_argument("-v", "--verbose", action='store_true', help="be verbose")
 parser.add_argument("-xyz", type=str, default='system.wat.leap.rst7', help='input AMBER coordinate file name (default: %(default)s)')
@@ -296,6 +298,9 @@ args = parser.parse_args()
 
 inputfile = args.f
 outputname = args.o
+fraglibdir = args.fraglibdir
+frag = args.frag
+conc = args.conc
 nreps = args.nreps
 smax = args.smax
 smin = args.smin
@@ -310,8 +315,6 @@ gmx = args.gmx
 bind_pref = args.bind_pref
 
 
-
-
 print("Starting script!\n")
 # set timer!
 start = time.time()
@@ -319,12 +322,8 @@ start = time.time()
 #### 0. load input !
 dirpath = "./"
 
-inputfile = "system.wat.leap.prmtop"
-/inputcoord = "system.wat.leap.rst7"
-
-fraglibdir = "./"
-fraginputfile = "benzene.prmtop"
-fraginputcoord = "benzene.rst7"
+fraginputfile = frag + ".prmtop"
+fraginputcoord = frag + ".rst7"
 
 # load protein system solvated and neutralized with ions!
 parm = parmed.load_file(inputfile, xyz=inputcoords)
@@ -332,16 +331,16 @@ parm = parmed.load_file(inputfile, xyz=inputcoords)
 # load fragment to insert (1 residue!)
 fragment = parmed.load_file(fraglibdir+fraginputfile, xyz=fraglibdir+fraginputcoords)
 fragResName = fragment.residues[0].name
+print("Fragment %s is named %s in the topology!" % (frag, fragResName))
 
 # calculate number of fragments based on concentration
-conc = 0.250 # molar
 volume = calc_box_volume(parm) # in A**3
 N_frags = round(6.022e23 * volume * 1.0e-27 * conc) # rounded
 
 # define output name
 # removes the ending indicating file type (eg. .prmtop)
 filename = dirpath + ".".join(inputfile.split(".")[:-1])
-outputname = filename + "_%.2fM-%s" % (conc, fragResName)
+outputname = filename + "_%.2fM-%s" % (conc, frag)
 # also save GROMACS parameter files (*.top, *.gro)!
 gmx = True
 
@@ -374,8 +373,8 @@ if gmx:
     parm.save(outputname+"_raw.top", overwrite=1)
     parm.save(outputname+"_raw.gro", overwrite=1)
     # save gromacs fragment file to check too
-    fragment.save(fragResName+".top", overwrite=1)
-    fragment.save(fragResName+".gro", overwrite=1)
+    fragment.save(frag+".top", overwrite=1)
+    fragment.save(frag+".gro", overwrite=1)
 
 #### 3. once all the waters inserted - remove any waters overlapping with fragments
 stripWaterClash(parm, Water, InsertedFrags, closeness=0.75)
