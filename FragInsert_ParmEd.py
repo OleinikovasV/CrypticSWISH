@@ -31,6 +31,34 @@ import time
 import copy
 import argparse
 
+########################################
+######### DEFINE INPUTS ################
+########################################
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=d, epilog=" ")
+
+parser.add_argument("-f", type=str, default='system.wat.leap.prmtop', help='input AMBER topology file name (default: %(default)s)')
+parser.add_argument("-xyz", type=str, default='system.wat.leap.rst7', help='input AMBER coordinate file name (default: %(default)s)')
+parser.add_argument("-o", type=str, default=None, help='output AMBER topology file name (default: system+FRG+RepFrag.prmtop)')
+parser.add_argument("-frag", type=str, default='BEN', help='input fragment name (default: %(default)s)')
+parser.add_argument("-fraglibdir", type=str, default='./fraglib', help='path to directory of fragment library (.prmtop, .rst7) (default: %(default)s)')
+parser.add_argument("-conc", type=float, default='0.25', help='approx. molar concentration of the fragment (default: %(default)s)')
+parser.add_argument("-frag_repel", default=True, action='store_true', help="use inter ligand repulsion; (default: %(default)s)")
+parser.add_argument("-v", "--verbose", action='store_true', help="be verbose")
+parser.add_argument("-gmx", default=False, action='store_true', help="save GROMACS topology, too (default: %(default)s)")
+
+
+args = parser.parse_args()
+
+inputfile = args.f
+outputname = args.o
+fraglibdir = args.fraglibdir
+frag = args.frag
+conc = args.conc
+frag_repel = args.frag_repel
+verbose = args.verbose
+inputcoords = args.xyz
+gmx = args.gmx
+
 
 #==========================================================================
 # define functions
@@ -282,34 +310,6 @@ def add_nonbond_params(gmxtopin, gmx_nonbond, gmxtopout):
 #==========================================================================
 # Main script
 #==========================================================================
-
-########################################
-######### DEFINE INPUTS ################
-########################################
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=d, epilog=" ")
-
-parser.add_argument("-f", type=str, default='system.wat.leap.prmtop', help='input AMBER topology file name (default: %(default)s)')
-parser.add_argument("-xyz", type=str, default='system.wat.leap.rst7', help='input AMBER coordinate file name (default: %(default)s)')
-parser.add_argument("-o", type=str, default=None, help='output AMBER topology file name (default: system+FRG+RepFrag.prmtop)')
-parser.add_argument("-frag", type=str, default='BEN', help='input fragment name (default: %(default)s)')
-parser.add_argument("-fraglibdir", type=str, default='./fraglib', help='path to directory of fragment library (.prmtop, .rst7) (default: %(default)s)')
-parser.add_argument("-conc", type=float, default='0.25', help='approx. molar concentration of the fragment (default: %(default)s)')
-parser.add_argument("-frag_repel", default=True, action='store_true', help="use inter ligand repulsion; (default: %(default)s)")
-parser.add_argument("-v", "--verbose", action='store_true', help="be verbose")
-parser.add_argument("-gmx", default=False, action='store_true', help="save GROMACS topology, too (default: %(default)s)")
-
-
-args = parser.parse_args()
-
-inputfile = args.f
-outputname = args.o
-fraglibdir = args.fraglibdir
-frag = args.frag
-conc = args.conc
-frag_repel = args.frag_repel
-verbose = args.verbose
-inputcoords = args.xyz
-gmx = args.gmx
 
 
 print("Starting script!\n")
