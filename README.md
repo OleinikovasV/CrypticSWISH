@@ -1,6 +1,6 @@
 # SWISH
 Scripts that are helpful to setup [SWISH](https://pubs.acs.org/doi/abs/10.1021/jacs.6b05425) simulations.
-Documentation to be added soon!
+Documentation to be added!
 
 Scripts have been rewritten to rely on [ParmEd](https://github.com/ParmEd/ParmEd) for better transferabilty and extensibility. Have been tested using Amber type force-fields, with AMBER and GROMACS MD engines, a little bit of OpenMM, too.
  
