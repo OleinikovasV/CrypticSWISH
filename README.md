@@ -5,7 +5,7 @@ Documentation to be added!
 Scripts have been rewritten to rely on [ParmEd](https://github.com/ParmEd/ParmEd) for better transferabilty and extensibility. Have been tested using Amber type force-fields, with AMBER and GROMACS MD engines, a little bit of OpenMM, too.
  
 1. Prepare topologies for water-apolar interface scaling
-2. Add fragments and adjust interligand repulsion (optional)
+2. Add fragments and adjust inter-ligand repulsion (optional)
 3. Other useful scripts for analysis (TBA)
 
 N.B. Consider all scripts under development. Please, inform of any issues. Thank you!
